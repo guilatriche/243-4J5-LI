@@ -3,6 +3,7 @@ import time
 from queue import Queue
 
 import curses
+import serial
 from evdev import InputDevice, ecodes, list_devices
 
 
@@ -64,6 +65,13 @@ class CoolConsoleUI:
         self.running = True
         self.status_message = "Prêt."
 
+        # Init serial
+        self.ser = None
+        try:
+            self.ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1)
+        except Exception as e:
+            self.status_message = f"Serial Error: {e}"
+
         self.buttons = []  # rempli à chaque redraw en fonction de la taille écran
 
     def _init_colors(self):
@@ -82,11 +90,14 @@ class CoolConsoleUI:
         btn_height = 3
 
         # positions verticales
-        start_row = h // 2 - 5
-        if start_row < 3:
-            start_row = 3
+        labels = ["ROUGE", "VERT", "STATUS", "LOGS", "REBOOT", "QUIT"]
+        
+        # Centering adjustment
+        total_h = len(labels) * (btn_height + 1) - 1
+        start_row = (h - total_h) // 2
+        if start_row < 2:
+            start_row = 2
 
-        labels = ["STATUS", "LOGS", "REBOOT", "QUIT"]
         for i, label in enumerate(labels):
             row = start_row + i * (btn_height + 1)
             col = (w - btn_width) // 2
@@ -178,7 +189,21 @@ class CoolConsoleUI:
         clicked_btn["active"] = True
         label = clicked_btn["label"]
 
-        if label == "STATUS":
+        if label == "ROUGE":
+            self.status_message = "Envoi: rouge"
+            if self.ser:
+                try:
+                    self.ser.write(b"rouge\n")
+                except Exception as e:
+                    self.status_message = f"Err Serial: {e}"
+        elif label == "VERT":
+            self.status_message = "Envoi: verte"
+            if self.ser:
+                try:
+                    self.ser.write(b"verte\n")
+                except Exception as e:
+                    self.status_message = f"Err Serial: {e}"
+        elif label == "STATUS":
             self.status_message = f"STATUS: Tout roule. Touch={row},{col}"
         elif label == "LOGS":
             self.status_message = "LOGS: (ici tu pourrais afficher des logs système, etc.)"
