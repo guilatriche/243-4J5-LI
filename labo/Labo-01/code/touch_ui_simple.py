@@ -140,6 +140,9 @@ class CoolConsoleUI:
         })
 
     def _draw(self):
+        # Fond global toujours noir pour bien faire ressortir les boutons
+        self.stdscr.bkgd(' ', curses.color_pair(1))
+
         self.stdscr.erase()
         h, w = self.stdscr.getmaxyx()
 
@@ -147,6 +150,9 @@ class CoolConsoleUI:
         self._build_buttons(h, w)
 
         for btn in self.buttons:
+            # On inverse un peu la logique visuelle pour que les boutons ressortent 
+            # sur le fond coloré, ou on garde le style simple.
+            # Ici on garde la logique existante : bouton actif = couleur vive.
             attr_idx = btn["pair_on"] if btn["active"] else btn["pair_off"]
             attr = curses.color_pair(attr_idx)
             if btn["active"]:
@@ -219,13 +225,22 @@ class CoolConsoleUI:
 
         if label == "ROUGE":
             self.red_on = not self.red_on
-            # Exclusive check: si on allume rouge, on éteint vert (optionnel mais propre)
-            if self.red_on: self.green_on = False
-            cmd = b"rouge\n"
+            # Exclusive check: si on allume rouge, on éteint vert
+            if self.red_on:
+                self.green_on = False
+                cmd = b"rouge\n"
+            else:
+                # Si on éteint le rouge
+                cmd = b"off\n"
+
         elif label == "VERT":
             self.green_on = not self.green_on
-            if self.green_on: self.red_on = False
-            cmd = b"verte\n"
+            if self.green_on:
+                self.red_on = False
+                cmd = b"verte\n"
+            else:
+                # Si on éteint le vert
+                cmd = b"off\n"
 
         if cmd and self.ser:
             try:
