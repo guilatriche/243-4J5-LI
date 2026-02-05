@@ -64,6 +64,8 @@ class CoolConsoleUI:
         self.event_queue = event_queue
         self.running = True
         self.status_message = "Prêt."
+        self.red_on = False
+        self.green_on = False
 
         # Init serial
         self.ser = None
@@ -77,9 +79,11 @@ class CoolConsoleUI:
     def _init_colors(self):
         curses.start_color()
         curses.use_default_colors()
-        curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_CYAN)   # bouton normal
+        curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_CYAN)   # bouton normal (bleu)
         curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_GREEN)  # bouton actif
         curses.init_pair(3, curses.COLOR_YELLOW, -1)                 # texte status
+        curses.init_pair(4, curses.COLOR_BLACK, curses.COLOR_RED)    # fond rouge
+        curses.init_pair(5, curses.COLOR_BLACK, curses.COLOR_GREEN)  # fond vert
 
     def _build_buttons(self, h, w):
         """
@@ -129,8 +133,14 @@ class CoolConsoleUI:
         self._build_buttons(h, w)
 
         # Dessin des boutons
+        base_pair = 1
+        if self.red_on:
+            base_pair = 4
+        elif self.green_on:
+            base_pair = 5
+
         for btn in self.buttons:
-            attr = curses.color_pair(2) if btn["active"] else curses.color_pair(1)
+            attr = curses.color_pair(2) if btn["active"] else curses.color_pair(base_pair)
             for r in range(btn["row"], btn["row"] + btn["height"]):
                 if 0 <= r < h:
                     self.stdscr.attron(attr)
@@ -190,14 +200,22 @@ class CoolConsoleUI:
         label = clicked_btn["label"]
 
         if label == "ROUGE":
-            self.status_message = "Envoi: rouge"
+            self.red_on = not self.red_on
+            if self.red_on:
+                self.green_on = False # Exclusif pour l'affichage du fond
+            
+            self.status_message = f"Envoi: rouge (State: {self.red_on})"
             if self.ser:
                 try:
                     self.ser.write(b"rouge\n")
                 except Exception as e:
                     self.status_message = f"Err Serial: {e}"
         elif label == "VERT":
-            self.status_message = "Envoi: verte"
+            self.green_on = not self.green_on
+            if self.green_on:
+                self.red_on = False # Exclusif pour l'affichage du fond
+
+            self.status_message = f"Envoi: verte (State: {self.green_on})"
             if self.ser:
                 try:
                     self.ser.write(b"verte\n")
