@@ -1,0 +1,14 @@
+# Secrets NE JAMAIS COMMIT
+auth.h
+*_secrets.*
+*.pem
+*.key
+mqtt_config.py
+
+# Fichiers de build
+.pio/
+build/
+
+# IDE
+.vscode/
+*.swp

@@ -1,5 +1,5 @@
-#define LED_ROUGE 13
-#define LED_VERTE 15
+#define LED_ROUGE 35
+#define LED_VERTE 34
 
 void setup() {
   Serial.begin(115200);
