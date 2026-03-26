@@ -336,7 +336,7 @@ class App:
             for obs in list(self.obstacles):
                 if beam_rect.colliderect(obs.rect): obs.kill(); self.player.score += 5
         hits = pygame.sprite.spritecollide(self.player, self.obstacles, True)
-        if hits: self.player.health -= 20 * (1.0 - shield_intensity)
+        if hits: self.player.health -= 4 * (1.0 - shield_intensity)
         for p in self.projectiles:
             hit_obs = pygame.sprite.spritecollide(p, self.obstacles, True)
             if hit_obs:
