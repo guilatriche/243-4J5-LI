@@ -1,0 +1,24 @@
+#ifndef AUTH_H
+#define AUTH_H
+
+// Configuration WiFi (CEGEP PEAP)
+const char WIFI_SSID[]     = "climoilou";
+const char WIFI_IDENTITY[] = "VOTRE_IDENTIFIEUR";
+const char WIFI_PASSWORD[] = "VOTRE_MOT_DE_PASSE";
+
+// Configuration LTE (Keepgo)
+const char APN[]      = "internet.keepgo.com";
+const char APN_USER[] = "";
+const char APN_PASS[] = "";
+
+// Configuration MQTT
+const char MQTT_BROKER[]    = "mqtt.gretier.xyz";
+const int  MQTT_PORT        = 443;
+const char MQTT_USER[]      = "esp_user";
+const char MQTT_PASS[]      = "VOTRE_PASSWORD_MQTT";
+const char MQTT_CLIENT_ID[] = "lte-2447103-cegep";
+
+// Topic Racine (Exigence Projet)
+const char TOPIC_ROOT[]     = "etudiant/votre-nom-prenom";
+
+#endif

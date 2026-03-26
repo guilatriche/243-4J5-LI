@@ -1,0 +1,14 @@
+# Identifiants sensibles (Exigence Projet)
+firmware/auth.h
+interface/mqtt_config.py
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Backups et Système
+*.bak
+*.tmp
+.DS_Store

@@ -1,0 +1,11 @@
+# Configuration MQTT pour le Raspberry Pi (Modèle)
+# Copiez ce fichier vers 'mqtt_config.py' et remplissez vos identifiants.
+
+MQTT_CONFIG = {
+    "broker": "mqtt.gretier.xyz",
+    "port": 443,
+    "username": "votre_utilisateur",
+    "password": "votre_mot_de_passe",
+    "client_id": "rpi-interface-v2",
+    "topic_root": "etudiant/votre-nom-prenom"
+}
