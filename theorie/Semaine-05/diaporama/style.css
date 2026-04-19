@@ -1,0 +1,4 @@
+/* Cache le dialogue "Goto" qui reste ouvert en production */
+#slidev-goto-dialog {
+  display: none !important;
+}

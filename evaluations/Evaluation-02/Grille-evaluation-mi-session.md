@@ -2,7 +2,7 @@
 
 **Cours:** 243-4J5-LI – Objets connectés
 **Évaluation:** Projet de mi-session — Shield PCB pour LilyGO A7670G
-**Pondération totale:** 30% (20% Capacité 1 + 10% Capacité 2)
+**Pondération totale:** 20% (15% Capacité 1 + 5% Capacité 2)
 
 ---
 
@@ -60,7 +60,7 @@
 | **4** | Fichiers bien organisés dans un dossier dédié; BOM avec fournisseurs suggérés; fichier README explicatif |
 | **5** | Package de fabrication professionnel : Gerbers vérifiés, BOM détaillée avec alternatives, instructions d'assemblage, rendu 3D inclus |
 
-### Critère 1.4 : Prototype breadboard (5%)
+### Critère 1.4 : Prototype breadboard (2%)
 
 *Capacité 1 : Concevoir et programmer des objets connectés*
 
@@ -72,6 +72,32 @@
 | **3** | **Seuil :** Prototype fonctionnel avec tous les composants assignés opérationnels; câblage identifiable; communication I2C avec l'accéléromètre validée |
 | **4** | Prototype soigné avec câblage organisé par couleur; étiquetage des connexions; facilement reproductible |
 | **5** | Prototype exemplaire : montage professionnel, documentation photographique, schéma de câblage annoté |
+
+### Critère 1.5 : Qualité de la soudure (1%)
+
+*Capacité 1 : Concevoir et programmer des objets connectés*
+
+| Niveau | Descripteur |
+|:------:|-------------|
+| **0** | Aucune soudure réalisée |
+| **1** | Soudures très déficientes : ponts multiples, composants mal positionnés |
+| **2** | Soudures inégales; quelques ponts ou joints froids présents |
+| **3** | **Seuil :** Soudures fonctionnelles sans ponts; composants correctement positionnés; polarité des LEDs respectée |
+| **4** | Soudures propres et brillantes; forme de cône régulière; aucun excès d'étain |
+| **5** | Soudures de qualité professionnelle : uniformes, propres, ordre d'assemblage optimal respecté |
+
+### Critère 1.6 : Fonctionnement du shield (2%)
+
+*Capacité 1 : Concevoir et programmer des objets connectés*
+
+| Niveau | Descripteur |
+|:------:|-------------|
+| **0** | Shield non assemblé ou non testé |
+| **1** | Shield assemblé mais ne fonctionne pas; court-circuits ou composants défaillants |
+| **2** | Fonctionnement partiel : certains composants répondent, d'autres non |
+| **3** | **Seuil :** Shield fonctionnel sur le LilyGO A7670E; test de continuité réussi; tous les composants opérationnels |
+| **4** | Shield pleinement fonctionnel avec vérification méthodique de chaque sous-circuit documentée |
+| **5** | Shield parfaitement fonctionnel : tests électriques complets, mesures de tension validées, aucune reprise nécessaire |
 
 ---
 
@@ -211,7 +237,9 @@
 | **1. Shield PCB** | 1.1 Schéma électrique | 10% | /5 | |
 | | 1.2 Routage PCB | 10% | /5 | |
 | | 1.3 Fichiers de fabrication | 5% | /5 | |
-| | 1.4 Prototype breadboard | 5% | /5 | |
+| | 1.4 Prototype breadboard | 2% | /5 | |
+| | 1.5 Qualité de la soudure | 1% | /5 | |
+| | 1.6 Fonctionnement du shield | 2% | /5 | |
 | **2. Programme embarqué** | 2.1 Lecture des capteurs | 10% | /5 | |
 | | 2.2 Contrôle des actionneurs | 5% | /5 | |
 | | 2.3 Communication MQTT | 15% | /5 | |
@@ -233,7 +261,7 @@ $$\text{Points} = \text{Note sur 5} \times \frac{\text{Pondération}}{5}$$
 **Exemple :** Critère 2.3 Communication MQTT (15%), note 4/5
 $$\text{Points} = 4 \times \frac{15}{5} = 4 \times 3 = 12 \text{ points}$$
 
-**Note finale du projet :** Somme des points sur 100, puis ×0.30 pour la pondération dans le cours.
+**Note finale du projet :** Somme des points sur 100, puis ×0.20 pour la pondération dans le cours.
 
 ---
 
@@ -241,11 +269,14 @@ $$\text{Points} = 4 \times \frac{15}{5} = 4 \times 3 = 12 \text{ points}$$
 
 | Capacité | Critères associés | Pondération |
 |----------|-------------------|:-----------:|
-| **Capacité 1** : Concevoir et programmer des objets connectés | 1.1, 1.2, 1.3, 1.4, 2.1, 2.2, 3.1, 3.3, 4.1, 4.2 | ~65% |
+| **Capacité 1** : Concevoir et programmer des objets connectés | 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 2.1, 2.2, 3.1, 3.3, 4.1, 4.2 | ~65% |
 | **Capacité 2** : Maîtriser les protocoles de communication IdO | 2.3, 3.2 | ~20% |
 | **Expression française** | 4.3 | ~4% |
 
 ---
 
-**Date de remise :** Semaine 7
+**Date de remise :** 23 mars 2026 à 8h00 (lundi matin)
+
+> **Important :** Les fichiers Gerber (PCB) doivent être remis au plus tard le **lundi 16 mars 2026 à 8h00**. Une note de **0** sera appliquée pour les critères 1.2 et 1.3 (Routage PCB et Fichiers de fabrication) si les Gerbers ne sont pas remis à temps, car la commande groupée des PCB est passée ce matin-là.
+
 **Mode de remise :** Git (branche `prenom-nom/projet-mi-session`)

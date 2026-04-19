@@ -143,6 +143,7 @@ Préfixer les IDs SVG avec le nom du composant pour éviter les conflits
 Utiliser Vue 3 Composition API (<script setup>)
 Limiter les animations CSS pour la performance
 Tester sur la résolution cible (1920x1080)
+**Ne jamais utiliser d'ASCII art** dans les slides (ni boîtes, ni schémas en caractères). Utiliser des tableaux Markdown, des diagrammes Mermaid, ou des images à la place.
 Documents de laboratoire (labo/)
 Format Markdown
 Les laboratoires utilisent le format Markdown avec :
@@ -238,6 +239,7 @@ Structure type d'une évaluation
 Conventions générales
 Langue
 Contenu en français
+Toujours utiliser les accents français (é, è, ê, à, ù, ç, etc.) dans tous les fichiers, y compris les fichiers HTML
 Termes techniques anglais acceptés entre parenthèses si nécessaire
 Pas d'emojis sauf si explicitement demandé
 Nommage des fichiers
