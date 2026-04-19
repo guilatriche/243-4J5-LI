@@ -10,37 +10,30 @@
 </head>
 <body>
 <div style="font-family: 'Segoe UI', system-ui, sans-serif; line-height: 1.6;">
-  <p>Configuration d'une <strong>gateway WiFi/MQTT</strong> pour connecter le réseau LoRa mesh à Internet, et <strong>tests terrain</strong> pour évaluer la couverture.</p>
-  <p><strong>Gateway Meshtastic :</strong></p>
+  <p>Introduction aux <strong>grands modèles de langage (LLM)</strong> sur ESP32 et assemblage des <strong>PCB</strong> reçus du fabricant : appel API HTTP depuis un microcontrôleur, puis soudure du shield du projet de mi-session.</p>
+  <p><strong>Introduction aux LLM :</strong></p>
   <ul style="margin: 10px 0;">
-    <li><strong>Pont LoRa ↔ MQTT</strong> — le T-Beam connecté au WiFi publie les messages sur le broker</li>
-    <li><strong>Topics standardisés</strong> — msh/[region]/[channel]/json pour les messages</li>
-    <li><strong>Bidirectionnel</strong> — envoyer des commandes depuis Python vers le mesh</li>
+    <li><strong>API compatible OpenAI</strong> — requête POST HTTPS avec messages JSON</li>
+    <li><strong>Groq</strong> — API gratuite pour accéder à des modèles rapides (Llama)</li>
+    <li><strong>Scénario créatif</strong> — le potentiomètre (0-4095) influence la réponse du LLM</li>
+    <li><strong>Sécurité</strong> — fichier config.h ignoré par Git, config.example.h commité</li>
   </ul>
-  <p><strong>Architecture unifiée :</strong></p>
+  <p><strong>Soudure du PCB :</strong></p>
   <ul style="margin: 10px 0;">
-    <li><strong>LTE + LoRa</strong> — redondance des communications</li>
-    <li><strong>Topics MQTT unifiés</strong> — iot/[projet]/[source]/[type]/[data]</li>
+    <li><strong>Composants du shield</strong> — résistances 330 Ω, headers LilyGO A7670E, boutons, LEDs, potentiomètres, MPU6050</li>
+    <li><strong>Vérification</strong> — inspection visuelle et test de continuité au multimètre</li>
+    <li><strong>Test fonctionnel</strong> — validation avec le firmware du projet de mi-session</li>
   </ul>
-  <p><strong>Tests terrain :</strong></p>
-  <ul style="margin: 10px 0;">
-    <li><strong>Méthodologie</strong> — point fixe de référence, points mobiles de test</li>
-    <li><strong>Données collectées</strong> — distance, RSSI, SNR, taux de succès</li>
-    <li><strong>Cartographie</strong> — visualisation de la couverture du réseau</li>
-  </ul>
-  <p><strong>Labo 9 :</strong> configurer la gateway WiFi/MQTT, effectuer une sortie terrain et créer une carte de couverture.</p>
+  <p><strong>Labo :</strong> créer un dépôt Git structuré, effectuer un appel API LLM depuis le T-Beam Supreme avec un scénario créatif, puis souder et tester le shield PCB avec le LilyGO A7670E.</p>
   <div style="margin-top: 15px; padding: 10px; background: #e3f2fd; border-left: 4px solid #2196F3; border-radius: 4px;">
     <p style="margin: 0 0 8px 0;"><strong>À faire pour la semaine prochaine :</strong></p>
     <ul style="margin: 0; padding-left: 20px;">
-      <li>Finaliser la carte de couverture</li>
-      <li>Préparer le poste de soudure (fer, étain, flux)</li>
-      <li>Revoir les techniques de soudure THT</li>
+      <li>Terminer le code d'appel LLM si non complété</li>
+      <li>Expérimenter avec différents prompts et modèles sur Groq</li>
     </ul>
   </div>
   <p style="margin-top: 15px; padding: 10px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 4px;">
-    <strong>Prochaine évaluation :</strong> Projet final IdO — semaine 15 (30%)<br>
-    <em>Matière couverte :</em> PCB assemblé, intégration Meshtastic, LLM, tests de performance<br>
-    <em>Format :</em> présentation orale (15 min) et démonstration live
+    <strong>Prochaine évaluation :</strong> Laboratoires semaines 9-10-11 (20%)<br>
   </p>
 </div>
 <script>
