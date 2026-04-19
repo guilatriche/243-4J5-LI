@@ -1,0 +1,27 @@
+# --- FICHIERS DE CONFIGURATION SENSIBLES ---
+# Ignore le fichier contenant tes clés API et mots de passe
+config.h
+
+# --- FICHIERS DE COMPILATION (Build artifacts) ---
+# Ignore les dossiers créés par l'IDE lors de la compilation
+build/
+bin/
+out/
+
+# Fichiers binaires et temporaires
+*.elf
+*.hex
+*.bin
+*.map
+*.lst
+
+# --- ENVIRONNEMENT ET ÉDITEURS ---
+# Ignore les réglages spécifiques à VS Code ou autres éditeurs
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# --- LOGS ET TEMPORAIRES ---
+*.log
