@@ -9,11 +9,11 @@
 # 
 
 # Matériel : 
-2 × LilyGO T-Beam Supreme (ESP32-S3 + SX1262 + OLED SSD1306 intégré)
-1 × Potentiomètre 10 kΩ
-2 × DEL — action côté émetteur, status côté récepteur
-Câbles USB-C, fils de connexion, breadboard
-Accès à un broker MQTT (Mosquitto) et une clé API Groq
+# 2 × LilyGO T-Beam Supreme (ESP32-S3 + SX1262 + OLED SSD1306 intégré)
+# 1 × Potentiomètre 10 kΩ
+# 2 × DEL — action côté émetteur, status côté récepteur
+# Câbles USB-C, fils de connexion, breadboard
+# Accès à un broker MQTT (Mosquitto) et une clé API Groq
 
 # 
 
