@@ -16,7 +16,9 @@
 
 # Ce projet implémente un pipeline IoT bidirectionnel complet simulant la surveillance de radiations. Un nœud émetteur capte une valeur analogique, la transmet via LoRa à une passerelle (Récepteur) qui interroge un modèle d'intelligence artificielle (LLM Groq) pour obtenir une analyse et une décision de sécurité.
 
-# <img width="1001" height="402" alt="Schéma architecture" src="https://github.com/user-attachments/assets/e27c493d-d3ac-42d7-94b9-9fde324249ed" />
+# Ci-dessous un schéma représentant l'architecture du projet
+
+<img width="1001" height="402" alt="Schéma architecture" src="https://github.com/user-attachments/assets/e27c493d-d3ac-42d7-94b9-9fde324249ed" />
 
 
 
