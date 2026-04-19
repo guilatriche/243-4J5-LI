@@ -18,7 +18,8 @@
 
 # Ci-dessous un schéma représentant l'architecture du projet
 
-<img width="1001" height="402" alt="Schéma architecture" src="https://github.com/user-attachments/assets/e27c493d-d3ac-42d7-94b9-9fde324249ed" />
+<img width="1001" height="402" alt="Schéma architecture" src="https://github.com/user-attachments/assets/7fef51ee-fce1-4fa8-8c6c-3fffcee3a324" />
+
 
 
 
