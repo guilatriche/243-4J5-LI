@@ -118,18 +118,13 @@
 
 # 
 
-# 5\. Configuration MQTT
+# Topic,Description,Format JSON
 
-# Le suivi des données s'effectue sur le broker via le topic suivant :
+# .../donnees :Valeur brute provenant du potentiomètre (Émetteur LoRa). Exemple: "{""valeur"": 2500}"
 
-# 
+# .../analyses : Commentaire généré par l'IA (Marvin) en fonction du taux. Exemple: "{""status"": ""Texte sarcastique...""}"
 
-# Topic : etudiant/guillaume-retier/decision
-
-# 
-
-# Contenu : Objet JSON structuré contenant le status et l' action.
-
+# .../actions : État de la DEL piloté par la décision de l'IA. Exemple: "{""action"": ""on""} ou {""action"": ""off""}"
 # 
 
 # 6\. Prérequis de Compilation (CRITIQUE)
