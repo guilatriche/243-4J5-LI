@@ -24,7 +24,7 @@
 #define MQTT_USER      "VOTRE_USER_MQTT"
 #define MQTT_PASS      "VOTRE_PASS_MQTT"
 #define MQTT_CLIENT_ID "gateway-guillaume-retier"
-#define MQTT_ROOT      "etudiant/guillaume-retier/"
+// #define MQTT_ROOT      "etudiant/guillaume-retier/lora/"
 
 // --- CONFIGURATION IA (GROQ) ---
 #define OPENWEBUI_URL  "https://api.groq.com/openai/v1/chat/completions"
