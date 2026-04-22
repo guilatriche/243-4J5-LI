@@ -9,14 +9,14 @@
 #include <WiFiClientSecure.h>
 #include <RadioLib.h>
 #include <U8g2lib.h>
-#include "esp_eap_client.h"
+#include "esp_wpa2.h" 
 #include "utilities.h"
 #include "LoRaBoards.h"
 #include "config.h"
+#include "trust_anchors.h"
 
 // Schéma JSON pour Marvin
 const char* SCHEMA = R"({"type":"json_schema","json_schema":{"name":"marvin_strict","strict":true,"schema":{"type":"object","additionalProperties":false,"required":["status","action"],"properties":{"status":{"type":"string"},"action":{"enum":["on","off"]}}}}})";
-
 
 // --- CLASSE WEBSOCKET MQTT ---
 class WebSocketClient : public Client {
@@ -139,16 +139,11 @@ String callLLM(int val) {
   int code = 0;
   int tentatives = 0;
   while (code != 200 && tentatives < 3) {
-    // 1. Rafale rapide indiquant l'envoi HTTP
     for(int i=0; i<6; i++) { 
         digitalWrite(LED_STATUS, !digitalRead(LED_STATUS)); 
         delay(50); 
     }
-    
-    // 2. Extinction complète : l'ESP32 attend la réponse du serveur dans le noir
     digitalWrite(LED_STATUS, LOW); 
-    
-    // 3. Exécution de la requête bloquante
     code = http.POST(body);
     tentatives++;
   }
@@ -169,18 +164,33 @@ void connectNetwork() {
       disp->setCursor(0, 15); disp->print("WiFi: Connexion...");
       disp->sendBuffer();
     }
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    while (WiFi.status() != WL_CONNECTED) { delay(500); Serial.print("."); }
-    if (disp) {
-      disp->clearBuffer();
-      disp->setCursor(0, 15); disp->print("WiFi OK"); 
-      disp->setCursor(0, 30); disp->print("IP: "); 
-      disp->print(WiFi.localIP().toString().c_str());
-      disp->sendBuffer();
-      delay(2000);
+    WiFi.disconnect(true);
+    WiFi.mode(WIFI_STA);
+    esp_wifi_sta_wpa2_ent_set_identity((uint8_t *)EAP_IDENTITY, strlen(EAP_IDENTITY));
+    esp_wifi_sta_wpa2_ent_set_username((uint8_t *)EAP_USERNAME, strlen(EAP_USERNAME));
+    esp_wifi_sta_wpa2_ent_set_password((uint8_t *)EAP_PASSWORD, strlen(EAP_PASSWORD));
+    esp_wifi_sta_wpa2_ent_enable();
+    WiFi.begin(WIFI_SSID);
+
+    int attempts = 0;
+    while (WiFi.status() != WL_CONNECTED && attempts < 20) { 
+      delay(500); 
+      Serial.print("."); 
+      attempts++;
+    }
+
+    if (WiFi.status() == WL_CONNECTED) {
+      if (disp) {
+        disp->clearBuffer();
+        disp->setCursor(0, 15); disp->print("WiFi OK"); 
+        disp->setCursor(0, 30); disp->print("IP: "); 
+        disp->print(WiFi.localIP().toString().c_str());
+        disp->sendBuffer();
+        delay(2000);
+      }
     }
   }
-  if (!mqttClient.connected()) {
+  if (WiFi.status() == WL_CONNECTED && !mqttClient.connected()) {
     sslClient.setClient(&wifiClient);
     sslClient.setInsecure();
     if (wsClient.connect(MQTT_BROKER, MQTT_PORT)) {
@@ -223,8 +233,6 @@ void loop() {
     if (radio.readData(received) == RADIOLIB_ERR_NONE) {
       float currentRSSI = radio.getRSSI();
       float currentSNR = radio.getSNR();
-      
-      // Allume la DEL brièvement à la réception LoRa
       digitalWrite(LED_STATUS, HIGH);
 
       JsonDocument rxDoc;
@@ -241,14 +249,12 @@ void loop() {
         disp->sendBuffer();
       }
 
-      // Appel bloquant à l'IA (gère son propre clignotement + attente)
       String respJSON = callLLM(potVal);
 
       JsonDocument r; deserializeJson(r, respJSON);
       String msg = r["status"] | "...";
       String led = r["action"] | "off";
 
-      // Clignotement de transition indiquant la réception de la réponse IA
       for(int i=0; i<4; i++) { 
           digitalWrite(LED_STATUS, !digitalRead(LED_STATUS)); 
           delay(100); 
@@ -262,18 +268,28 @@ void loop() {
         disp->print("SNR:"); disp->print(currentSNR, 1); disp->print("dB");
         disp->drawStr(0, 26, "-------------------------");
         drawWrappedText(msg, 0, 36);
-        
-        // --- ACCUSÉ DE RÉCEPTION MATÉRIEL ---
         disp->sendBuffer(); 
         digitalWrite(LED_STATUS, LOW); 
       }
 
-      // --- RETOUR LORA PRIORITAIRE ---
       radio.transmit(respJSON);
 
-      // --- PUBLICATION MQTT EN TÂCHE DE FOND ---
+      // --- PUBLICATIONS MQTT STRUCTURÉES ---
       if (mqttClient.connected()) {
-        mqttClient.publish((String(MQTT_ROOT) + "decision").c_str(), respJSON.c_str());
+        // 1. lora/donnees
+        JsonDocument d1; d1["valeur"] = potVal;
+        String b1; serializeJson(d1, b1);
+        mqttClient.publish((String(MQTT_ROOT) + "donnees").c_str(), b1.c_str());
+
+        // 2. lora/analyses
+        JsonDocument d2; d2["status"] = msg;
+        String b2; serializeJson(d2, b2);
+        mqttClient.publish((String(MQTT_ROOT) + "analyses").c_str(), b2.c_str());
+
+        // 3. lora/actions
+        JsonDocument d3; d3["action"] = led;
+        String b3; serializeJson(d3, b3);
+        mqttClient.publish((String(MQTT_ROOT) + "actions").c_str(), b3.c_str());
       }
     }
     radio.startReceive();
