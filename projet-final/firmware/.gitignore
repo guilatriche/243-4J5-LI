@@ -1,0 +1,19 @@
+# Configuration sensible (identifiants)
+auth.h
+trust_anchors.h
+
+# Sauvegardes et fichiers temporaires
+backups/
+
+# Arduino / Compilation
+build/
+.vscode/
+.arduinoIDE/
+*.bin
+*.elf
+*.hex
+
+# Python (si applicable)
+__pycache__/
+*.py[cod]
+.venv/

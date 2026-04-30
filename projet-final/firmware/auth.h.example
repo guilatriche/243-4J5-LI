@@ -1,0 +1,25 @@
+#ifndef AUTH_H
+#define AUTH_H
+
+// Configuration WiFi (CEGEP - WPA2 Enterprise/PEAP)
+const char WIFI_SSID[]     = "VOTRE_SSID_WIFI";
+const char WIFI_IDENTITY[] = "VOTRE_NUMERO_DA";
+const char WIFI_PASSWORD[] = "VOTRE_MOT_DE_PASSE";
+
+// Configuration LTE (Optionnel - ex: Keepgo)
+const char APN[]      = "internet.keepgo.com";
+const char APN_USER[] = "";
+const char APN_PASS[] = "";
+
+// Configuration MQTT
+const char MQTT_BROKER[]    = "VOTRE_BROKER_MQTT";
+const int  MQTT_PORT        = 443;
+const char MQTT_USER[]      = "VOTRE_UTILISATEUR_MQTT";
+const char MQTT_PASS[]      = "VOTRE_MOT_DE_PASSE_MQTT";
+const char MQTT_CLIENT_ID[] = "VOTRE_CLIENT_ID";
+
+// Configuration Projet (Hydro-Limoilou)
+const char SITE_ID[]      = "NOM_DU_POSTE";
+const char TOPIC_PREFIX[] = "hydro-limoilou/NOM_DU_POSTE/";
+
+#endif

@@ -227,8 +227,9 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   if (doc.containsKey("state")) {
     String state = doc["state"].as<String>();
     bool isOn = (state == "on" || state == "ON");
-    if (t.indexOf("/led_1") != -1) digitalWrite(PIN_LED_1, isOn ? HIGH : LOW);
-    if (t.indexOf("/led_2") != -1) digitalWrite(PIN_LED_2, isOn ? HIGH : LOW);
+    // Support both /led_1 and /led_01 formats
+    if (t.indexOf("/led_1") != -1 || t.indexOf("/led_01") != -1) digitalWrite(PIN_LED_1, isOn ? HIGH : LOW);
+    if (t.indexOf("/led_2") != -1 || t.indexOf("/led_02") != -1) digitalWrite(PIN_LED_2, isOn ? HIGH : LOW);
     Serial.printf("[ACTUATOR] LED change: %s\n", state.c_str());
   }
 }
