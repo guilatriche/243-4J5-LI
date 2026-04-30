@@ -156,7 +156,6 @@ PubSubClient mqttClient(wsClient);
 
 unsigned long lastPublishTime = 0;
 bool networkModeLTE = false;
-bool lastPirState = false;
 
 void initSerial() {
   Serial.begin(115200);
@@ -309,24 +308,6 @@ void loop() {
     }
   }
   mqttClient.loop();
-
-  // Détection Mouvement (PIR)
-  bool currentPirState = digitalRead(PIN_PIR);
-  if (currentPirState == HIGH && lastPirState == LOW) {
-    Serial.println("[ALERTE] Mouvement détecté !");
-    if (mqttClient.connected()) {
-      unsigned long ts = getTimestamp();
-      StaticJsonDocument<128> doc;
-      doc["level"] = "warning";
-      doc["ts"] = ts;
-      char buffer[128];
-      serializeJson(doc, buffer);
-      char topic[100];
-      snprintf(topic, sizeof(topic), "%salarm/motion", TOPIC_PREFIX);
-      mqttClient.publish(topic, buffer);
-    }
-  }
-  lastPirState = currentPirState;
 
   unsigned long now = millis();
   if (now - lastPublishTime >= PUBLISH_INTERVAL_MS) {
