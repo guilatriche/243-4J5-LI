@@ -110,9 +110,10 @@ Le courtier Mosquitto local du Pi 5 est accessible au serveur central via un **T
 3.  Appuyer sur le bouton **ACQUITTER** sur l'écran tactile pour rétablir l'état normal.
 
 ### Scénario 3 : Perte et Reprise de Lien -> **RÉSULTAT : PASSÉ ✅**
-1.  Couper le point d'accès WiFi principal.
-2.  **Résultat attendu** : L'interface tactile bascule automatiquement sur le lien secondaire "wan privé" via le port Ethernet du Raspberry Pi (`ws://192.168.100.7:9001`). Le champ `link` dans le topic `status` reflète le changement de réseau.
-3.  Rétablir le WiFi ; le système (ESP32 et Interface) doit reprendre son mode de fonctionnement préférentiel via Cloudflare.
+1.  Brancher le câble Ethernet reliant le Pi 5 au serveur de la VM.
+2.  Sur l'interface tactile (Page **LINK**), appuyer sur le bouton **PASSER AU WAN PRIVÉ**.
+3.  **Résultat attendu** : L'interface se déconnecte du Cloud et se reconnecte instantanément au lien local (`ws://192.168.100.7:9001`). Le champ "Broker" et "Réseau" sur l'écran se mettent à jour.
+4.  Appuyer sur **PASSER AU CLOUD** pour revenir au mode de fonctionnement nominal.
 
 ---
 

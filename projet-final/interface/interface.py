@@ -88,6 +88,7 @@ class App:
         self.btn_led1 = pygame.Rect(100, 850, 240, 80)
         self.btn_led2 = pygame.Rect(380, 850, 240, 80)
         self.btn_ack = pygame.Rect(210, 1000, 300, 100)
+        self.btn_switch = pygame.Rect(50, 1000, 620, 100) # Bouton switch broker sur page LINK
 
     def load_history(self):
         try:
@@ -204,6 +205,13 @@ class App:
                 self.alarm_latched = False # Libère le clignotement
                 self.motion_active = False
                 self.door_alarm_active = False
+        
+        # Switch Broker
+        if self.current_page == "LINK":
+            if self.btn_switch.collidepoint(pos):
+                self.current_broker = "secondary" if self.current_broker == "primary" else "primary"
+                if self.client:
+                    self.client.disconnect() # Force la reconnexion
 
 
     def handle_events(self):
@@ -356,6 +364,15 @@ class App:
             
             self.screen.blit(l_t, (70, y + 10))
             self.screen.blit(v_t, (70, y + 35))
+
+        # Bouton Switch Broker
+        btn_col = COLOR_WARN if self.current_broker == "primary" else COLOR_SUCCESS
+        pygame.draw.rect(self.screen, COLOR_HUD_BG, self.btn_switch, border_radius=15)
+        pygame.draw.rect(self.screen, btn_col, self.btn_switch, 2, border_radius=15)
+        
+        lbl_text = "PASSER AU WAN PRIVÉ" if self.current_broker == "primary" else "PASSER AU CLOUD"
+        lbl_btn = self.font_mid.render(lbl_text, True, btn_col)
+        self.screen.blit(lbl_btn, (self.btn_switch.centerx - lbl_btn.get_width()//2, self.btn_switch.centery - lbl_btn.get_height()//2))
 
     def run(self):
         def mqtt_thread():
