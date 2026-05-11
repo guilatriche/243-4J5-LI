@@ -18,8 +18,22 @@ const char MQTT_USER[]      = "VOTRE_UTILISATEUR_MQTT";
 const char MQTT_PASS[]      = "VOTRE_MOT_DE_PASSE_MQTT";
 const char MQTT_CLIENT_ID[] = "VOTRE_CLIENT_ID";
 
-// Configuration Projet (Hydro-Limoilou)
+// Configuration Projet Final (Hydro-Limoilou)
 const char SITE_ID[]      = "NOM_DU_POSTE";
 const char TOPIC_PREFIX[] = "hydro-limoilou/NOM_DU_POSTE/";
+
+// --- GROQ LLM ---
+const char OPENWEBUI_URL[] = "https://api.groq.com/openai/v1/chat/completions";
+const char API_KEY[]       = "VOTRE_CLE_API_GROQ";
+const char MODEL_NAME[]    = "NOM_DU_MODELE";
+
+const char SYSTEM_PROMPT[] = 
+"Tu es un expert technique Hydro-Limoilou. Réponds EXCLUSIVEMENT en français canadien. "
+"Analyse les donnees capteurs du Poste-XX. Rédige un court paragraphe narratif, fluide et "
+"élégant (maximum 20 mots). Évite les listes ou les énumérations sèches. "
+"Intègre les mesures naturellement (ex: 'un taux d'humidité de 61 %' ou 'une luminosité ambiante de 100 lux'). "
+"N'utilise jamais de pourcentage pour la lumière. "
+"Reponds OBLIGATOIREMENT par un objet JSON valide contenant uniquement la cle 'summary'. "
+"Exemple: {\"summary\": \"Le poste XX est actuellement stable avec une température de 22°C et un taux d'humidité de 61 %.\"}";
 
 #endif

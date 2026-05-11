@@ -1,0 +1,24 @@
+# Identifiants (Secrets)
+**/auth.h
+**/credentials.py
+**/mqtt_config.py
+.env
+
+# Données locales et historiques
+**/alarm_history.json
+mosquitto_backup/
+**/backups/
+
+# Fichiers de build et cache
+**/__pycache__/
+**/build/
+.arduinoIDE/
+*.py[cod]
+*$py.class
+*.elf
+*.bin
+*.hex
+
+# Backups de scripts
+interface/interface_*.py
+interface/mqtt_config_*.py

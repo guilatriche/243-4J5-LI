@@ -7,13 +7,20 @@
 #include "esp_wpa2.h"
 #include <ArduinoJson.h>
 #include <time.h>
+#include <HTTPClient.h>
+#include <WiFiClientSecure.h>
 
 // Modem & MQTT libraries
 #define TINY_GSM_MODEM_SIM7600
 #include <TinyGsmClient.h>
-#include <PubSubClient.h>
-#include <ESP_SSLClient.h>
+#include <MQTT.h>
+#include <WiFiClientSecure.h>
 #include <mbedtls/base64.h>
+
+// --- Timings (Contrat Hydro-Limoilou) ---
+const unsigned long INTERVAL_TELEMETRY = 10000; // 10s
+const unsigned long INTERVAL_STATUS = 30000;    // 30s
+const unsigned long INTERVAL_LLM = 120000;      // 2 min
 
 #include "auth.h"
 #include "trust_anchors.h"
@@ -27,6 +34,7 @@ const int MODEM_TX = 26;
 const int MODEM_RX = 27;
 const int MODEM_PWRKEY = 4;
 const int BOARD_POWERON = 12;
+const int PIN_BAT_ADC = 35;
 
 const unsigned long PUBLISH_INTERVAL_MS = 5000;
 
@@ -38,11 +46,12 @@ HardwareSerial serialAT(1);
 TinyGsm modem(serialAT);
 TinyGsmClient gsmClient(modem, 0);
 WiFiClient wifiClient;
-ESP_SSLClient sslClient;
+WiFiClientSecure sslClient;       // Utilise mbedTLS natif de l'ESP32
+WiFiClientSecure IA_Client;      // Instance dédiée pour l'IA
 
 class WebSocketClient : public Client {
 private:
-  ESP_SSLClient* _sslClient;
+  WiFiClientSecure* _sslClient;
   bool _wsConnected;
   uint8_t _rxBuffer[512];
   size_t _rxBufferLen;
@@ -87,7 +96,7 @@ private:
   }
 
 public:
-  WebSocketClient(ESP_SSLClient* sslClient) : _sslClient(sslClient), _wsConnected(false), _rxBufferLen(0), _rxBufferPos(0) {}
+  WebSocketClient(WiFiClientSecure* sslClient) : _sslClient(sslClient), _wsConnected(false), _rxBufferLen(0), _rxBufferPos(0) {}
   int connect(IPAddress ip, uint16_t port) override { return 0; }
   int connect(const char *host, uint16_t port) override {
     if (!_sslClient->connect(host, port)) return 0;
@@ -119,7 +128,16 @@ public:
     for(int i = 0; i < 4; i++) { mask[i] = random(0, 256); header[headerLen + i] = mask[i]; }
     headerLen += 4;
     _sslClient->write(header, headerLen);
-    for(size_t i = 0; i < size; i++) { uint8_t maskedByte = buf[i] ^ mask[i % 4]; _sslClient->write(&maskedByte, 1); }
+    
+    // Optimisation : Envoi par bloc pour stabilité SSL
+    uint8_t* maskedBuf = (uint8_t*)malloc(size);
+    if (maskedBuf) {
+      for(size_t i = 0; i < size; i++) maskedBuf[i] = buf[i] ^ mask[i % 4];
+      _sslClient->write(maskedBuf, size);
+      free(maskedBuf);
+    } else {
+      for(size_t i = 0; i < size; i++) { uint8_t b = buf[i] ^ mask[i % 4]; _sslClient->write(&b, 1); }
+    }
     return size;
   }
   int available() override {
@@ -152,11 +170,51 @@ public:
 };
 
 WebSocketClient wsClient(&sslClient);
-PubSubClient mqttClient(wsClient);
+MQTTClient mqttClient(1024);
 
 unsigned long lastPublishTime = 0;
+unsigned long lastStatusTime = 0;
+unsigned long lastLLMTime = 0;
+unsigned long lastAlarmPublishTime = 0; // Pour limiter la répétition des alarmes
 bool networkModeLTE = false;
 bool lastPirState = false;
+bool doorAlarmActive = false;
+
+// --- Task LLM ---
+TaskHandle_t TaskLLMHandle = NULL;
+struct LLMData {
+  float temp;
+  float hum;
+  float pres;
+  float lux;
+  bool pir;
+  bool pending = false;
+} llmParams;
+
+void taskLLM(void * pvParameters) {
+  for(;;) {
+    if (llmParams.pending) {
+      String summary = callLLM(llmParams.temp, llmParams.hum, llmParams.pres, llmParams.lux, llmParams.pir);
+      
+      if (mqttClient.connected()) {
+        unsigned long ts = getTimestamp();
+        StaticJsonDocument<512> doc;
+        doc["summary"] = summary;
+        doc["model"] = MODEL_NAME;
+        doc["ts"] = ts;
+        
+        char buffer[512];
+        serializeJson(doc, buffer);
+        char topic[100];
+        snprintf(topic, sizeof(topic), "%sstatus/llm", TOPIC_PREFIX);
+        mqttClient.publish(topic, buffer, true, 0); // Retain = true, QoS 0
+        Serial.println("[LLM] Nouveau resume publie via Task");
+      }
+      llmParams.pending = false;
+    }
+    vTaskDelay(pdMS_TO_TICKS(1000));
+  }
+}
 
 void initSerial() {
   Serial.begin(115200);
@@ -220,16 +278,15 @@ void connectLTE() {
   }
 }
 
-void mqttCallback(char* topic, byte* payload, unsigned int length) {
-  String t = String(topic);
+void messageReceived(String &topic, String &payload) {
+  Serial.printf("[MQTT] Message reçu sur %s : %s\n", topic.c_str(), payload.c_str());
   StaticJsonDocument<128> doc;
-  if (deserializeJson(doc, payload, length)) return;
+  if (deserializeJson(doc, payload)) return;
   if (doc.containsKey("state")) {
     String state = doc["state"].as<String>();
     bool isOn = (state == "on" || state == "ON");
-    // Support both /led_1 and /led_01 formats
-    if (t.indexOf("/led_1") != -1 || t.indexOf("/led_01") != -1) digitalWrite(PIN_LED_1, isOn ? HIGH : LOW);
-    if (t.indexOf("/led_2") != -1 || t.indexOf("/led_02") != -1) digitalWrite(PIN_LED_2, isOn ? HIGH : LOW);
+    if (topic.indexOf("/led_1") != -1 || topic.indexOf("/led_01") != -1) digitalWrite(PIN_LED_1, isOn ? HIGH : LOW);
+    if (topic.indexOf("/led_2") != -1 || topic.indexOf("/led_02") != -1) digitalWrite(PIN_LED_2, isOn ? HIGH : LOW);
     Serial.printf("[ACTUATOR] LED change: %s\n", state.c_str());
   }
 }
@@ -238,23 +295,29 @@ void connectMQTT() {
   if (!networkModeLTE) {
     connectWiFi();
     if (WiFi.status() != WL_CONNECTED) return;
-    sslClient.setClient(&wifiClient);
+    sslClient.setInsecure();
   } else {
     connectLTE();
     if (!networkModeLTE) return;
-    sslClient.setClient(&gsmClient);
   }
-  sslClient.setInsecure();
-  sslClient.setBufferSizes(2048, 1024);
-  mqttClient.setServer(MQTT_BROKER, MQTT_PORT);
-  mqttClient.setCallback(mqttCallback);
+  
+  mqttClient.begin(wsClient); 
+  mqttClient.onMessage(messageReceived);
+  
+  Serial.println("[MQTT] Tentative WebSocket...");
   if (wsClient.connect(MQTT_BROKER, MQTT_PORT)) {
-    if (mqttClient.connect(MQTT_CLIENT_ID, MQTT_USER, MQTT_PASS)) {
-      Serial.println("[INFO] MQTT Connecté");
+    Serial.println("[MQTT] WebSocket OK. Connexion Broker...");
+    // Le 4ème paramètre 'true' est crucial : il skip le connect TCP/SSL interne de la lib
+    if (mqttClient.connect(MQTT_CLIENT_ID, MQTT_USER, MQTT_PASS, true)) {
+      Serial.println("[INFO] MQTT Connecté (Native SSL)");
       char topic[100];
       snprintf(topic, sizeof(topic), "%sactuators/+", TOPIC_PREFIX);
       mqttClient.subscribe(topic);
+    } else {
+      Serial.printf("[ERROR] Echec MQTT Code: %d\n", mqttClient.returnCode());
     }
+  } else {
+    Serial.println("[ERROR] Echec WebSocket (Handshake)");
   }
 }
 
@@ -266,13 +329,81 @@ unsigned long getTimestamp() {
   return (unsigned long)now;
 }
 
-void readAndPublishSensors() {
+String callLLM(float temp, float hum, float pres, float lux, bool pir) {
+  HTTPClient http;
+  IA_Client.setInsecure();
+
+  Serial.println("[LLM] Connexion a Groq via HTTPClient...");
+  
+  if (!http.begin(IA_Client, OPENWEBUI_URL)) {
+    return "Erreur initialisation HTTP";
+  }
+
+  http.addHeader("Content-Type", "application/json");
+  http.addHeader("Authorization", String("Bearer ") + API_KEY);
+  http.setTimeout(30000); // 30s timeout pour le LLM
+
+  // Preparation du body
+  JsonDocument req;
+  req["model"] = MODEL_NAME;
+  
+  const char* SCHEMA = R"({"type":"json_schema","json_schema":{"name":"poste07_diag","strict":true,"schema":{"type":"object","additionalProperties":false,"required":["summary"],"properties":{"summary":{"type":"string"}}}}})";
+  JsonDocument schemaDoc; 
+  deserializeJson(schemaDoc, SCHEMA);
+  req["response_format"] = schemaDoc;
+
+  auto m = req["messages"].to<JsonArray>();
+  JsonObject sys = m.add<JsonObject>(); 
+  sys["role"] = "system"; 
+  sys["content"] = SYSTEM_PROMPT;
+  
+  JsonObject usr = m.add<JsonObject>(); 
+  usr["role"] = "user"; 
+  char input[256];
+  snprintf(input, sizeof(input), "Temperature=%.1fC, Humidite=%.1f%%, Pression=%.1fhPa, Luminosite=%.1f lux, Mouvement=%d", 
+           temp, hum, pres, lux, pir ? 1 : 0);
+  usr["content"] = input;
+  
+  String body;
+  serializeJson(req, body);
+
+  // Envoi
+  int httpCode = http.POST(body);
+  String result = "Erreur parsing";
+
+  if (httpCode == HTTP_CODE_OK) {
+    String response = http.getString();
+    JsonDocument r;
+    DeserializationError error = deserializeJson(r, response);
+    if (error == DeserializationError::Ok) {
+      String raw_content = r["choices"][0]["message"]["content"].as<String>();
+      JsonDocument summaryDoc;
+      if (deserializeJson(summaryDoc, raw_content) == DeserializationError::Ok) {
+        result = summaryDoc["summary"].as<String>();
+      } else {
+        result = raw_content;
+      }
+    } else {
+      Serial.printf("[LLM] Erreur JSON: %s\n", error.c_str());
+      Serial.println("[LLM] Réponse brute pour debug:");
+      Serial.println(response);
+    }
+  } else {
+    Serial.printf("[LLM] Erreur HTTP: %d\n", httpCode);
+    result = "Erreur HTTP: " + String(httpCode);
+  }
+
+  http.end();
+  return result;
+}
+
+void readAndPublishTelemetry() {
   float temp = bme.readTemperature();
   float hum = bme.readHumidity();
   float pres = bme.readPressure() / 100.0F;
   float lux = lightMeter.readLightLevel();
 
-  Serial.printf("\n--- [MESURES] ---\nTemp: %.2fC | Hum: %.2f%% | Pres: %.1fhPa | Lux: %.1flux\n", temp, hum, pres, lux);
+  Serial.printf("\n--- [TELEMETRIE] ---\nT: %.1fC | H: %.1f%% | P: %.1fhPa | L: %.1flux\n", temp, hum, pres, lux);
 
   if (!mqttClient.connected()) return;
   
@@ -283,13 +414,41 @@ void readAndPublishSensors() {
     doc.clear(); doc["value"] = val; doc["unit"] = unit; doc["ts"] = ts;
     serializeJson(doc, buffer);
     snprintf(topic, sizeof(topic), "%stelemetry/%s", TOPIC_PREFIX, sub);
-    mqttClient.publish(topic, buffer);
+    mqttClient.publish(topic, buffer, false, 0);
   };
 
   pub("temperature", temp, "C");
   pub("humidity", hum, "%");
   pub("pressure", pres, "hPa");
   pub("light", lux, "lux");
+}
+
+float readBattery() {
+  // Utilise la calibration d'usine de l'ESP32 pour lire les millivolts au pin
+  float pin_mv = analogReadMilliVolts(PIN_BAT_ADC);
+  // Le pont diviseur par 2 sur GPIO 35 ramène la tension batterie à la moitié.
+  // On multiplie par 2 pour retrouver le voltage réel de la pile.
+  return (pin_mv * 2.0) / 1000.0;
+}
+
+void publishStatus() {
+  if (!mqttClient.connected()) return;
+  
+  unsigned long ts = getTimestamp();
+  int rssi = modem.getSignalQuality();
+  float bat = readBattery();
+  StaticJsonDocument<256> doc;
+  char buffer[256]; char topic[100];
+
+  doc["link"] = networkModeLTE ? "wan privé" : "wifi";
+  doc["uptime"] = millis() / 1000;
+  doc["rssi"] = rssi;
+  doc["battery_v"] = bat;
+  doc["ts"] = ts;
+  serializeJson(doc, buffer);
+  snprintf(topic, sizeof(topic), "%sstatus", TOPIC_PREFIX);
+  mqttClient.publish(topic, buffer, true, 0);
+  Serial.printf("[STATUS] Maj 30s: RSSI=%d, BAT=%.2fV\n", rssi, bat);
 }
 
 void setup() {
@@ -299,6 +458,8 @@ void setup() {
   initLTE();
   connectMQTT();
   configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+  
+  xTaskCreatePinnedToCore(taskLLM, "TaskLLM", 8192, NULL, 1, &TaskLLMHandle, 0);
 }
 
 void loop() {
@@ -311,27 +472,94 @@ void loop() {
   }
   mqttClient.loop();
 
-  // Détection Mouvement (PIR)
+  unsigned long now = millis();
+
+  // Détection Mouvement (PIR) - Instantané
   bool currentPirState = digitalRead(PIN_PIR);
-  if (currentPirState == HIGH && lastPirState == LOW) {
-    Serial.println("[ALERTE] Mouvement détecté !");
+  if (currentPirState != lastPirState) {
     if (mqttClient.connected()) {
       unsigned long ts = getTimestamp();
       StaticJsonDocument<128> doc;
-      doc["level"] = "warning";
+      doc["level"] = (currentPirState == HIGH) ? "warning" : "ok";
+      doc["value"] = (currentPirState == HIGH) ? 1 : 0;
+      doc["unit"] = "detect";
       doc["ts"] = ts;
       char buffer[128];
       serializeJson(doc, buffer);
       char topic[100];
       snprintf(topic, sizeof(topic), "%salarm/motion", TOPIC_PREFIX);
-      mqttClient.publish(topic, buffer);
+      mqttClient.publish(topic, buffer, false, 1); // QoS 1
+    }
+    lastPirState = currentPirState;
+  }
+
+  // Surveillance Lumière Temps Réel (Alarmes immédiates et répétées)
+  static unsigned long lastFastLightCheck = 0;
+  if (now - lastFastLightCheck >= 500) { // Check toutes les 500ms
+    lastFastLightCheck = now;
+    float currentLux = lightMeter.readLightLevel();
+    
+    if (currentLux > 2000.0) {
+      // Alarme active : Envoyer immédiatement si c'est le début ou toutes les 2s
+      if (!doorAlarmActive || (now - lastAlarmPublishTime >= 2000)) {
+        doorAlarmActive = true;
+        lastAlarmPublishTime = now;
+        if (mqttClient.connected()) {
+          unsigned long ts = getTimestamp();
+          StaticJsonDocument<128> doc;
+          doc["level"] = "critical";
+          doc["value"] = currentLux;
+          doc["unit"] = "lux";
+          doc["ts"] = ts;
+          char buffer[128];
+          serializeJson(doc, buffer);
+          char topic[100];
+          snprintf(topic, sizeof(topic), "%salarm/door", TOPIC_PREFIX);
+          mqttClient.publish(topic, buffer, false, 1);
+          Serial.printf("[ALERTE] PORTE (Lumière critique): %.1f lux\n", currentLux);
+        }
+      }
+    } else if (doorAlarmActive) {
+      // Retour à la normale
+      doorAlarmActive = false;
+      if (mqttClient.connected()) {
+        unsigned long ts = getTimestamp();
+        StaticJsonDocument<128> doc;
+        doc["level"] = "ok";
+        doc["value"] = currentLux;
+        doc["ts"] = ts;
+        char buffer[128];
+        serializeJson(doc, buffer);
+        char topic[100];
+        snprintf(topic, sizeof(topic), "%salarm/door", TOPIC_PREFIX);
+        mqttClient.publish(topic, buffer, false, 1);
+        Serial.println("[ALERTE] Retour porte normale");
+      }
     }
   }
-  lastPirState = currentPirState;
-
-  unsigned long now = millis();
-  if (now - lastPublishTime >= PUBLISH_INTERVAL_MS) {
+  
+  // Télémétrie (10s)
+  if (now - lastPublishTime >= INTERVAL_TELEMETRY) {
     lastPublishTime = now;
-    readAndPublishSensors();
+    readAndPublishTelemetry();
+  }
+
+  // Statut (30s)
+  if (now - lastStatusTime >= INTERVAL_STATUS) {
+    lastStatusTime = now;
+    publishStatus();
+  }
+
+  // Pipeline LLM (2 min)
+  if (now - lastLLMTime >= INTERVAL_LLM) {
+    lastLLMTime = now;
+    if (!llmParams.pending) {
+      llmParams.temp = bme.readTemperature();
+      llmParams.hum = bme.readHumidity();
+      llmParams.pres = bme.readPressure() / 100.0F;
+      llmParams.lux = lightMeter.readLightLevel();
+      llmParams.pir = digitalRead(PIN_PIR);
+      llmParams.pending = true;
+    }
   }
 }
