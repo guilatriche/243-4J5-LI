@@ -1,0 +1,8 @@
+"Id";"Référence";"Empreinte";"Quantité";"Désignation";"Fournisseur et réf";
+1;"J2";"header lyligo";1;"Lilygo LTE";;;
+2;"J4";"PinHeader PIR";1;"EKMC4607112K";;;
+3;"R1,R2";"R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal";2;"330";;;
+4;"J3";"Capteur de lumière";1;"BH1750";;;
+5;"D2";"LED_D5.0mm";1;"LED_ROUGE";;;
+6;"D1";"LED_D5.0mm";1;"LED_VERTE";;;
+7;"J1";"BME280";1;"BME820";;;
