@@ -32,7 +32,7 @@ Le shield PCB pour l'ESP32 a été conçu sous KiCad pour assurer une connectivi
 ### Consultation Rapide (Dossier `/docs`)
 - **Schéma de principe** : [schéma_électrique.pdf](./docs/schéma_électrique.pdf)
 - **Vue du montage** : [Photo_breadboard.jpeg](./docs/Photo_breadboard.jpeg)
-- **Vidéo du scénario 1 - Démonstration de l'installation** : [Scénario_1_Présentation.MP4](./docs/Scénario 1 - Présentation.MP4)
+- **Vidéo du scénario 1 - Démonstration de l'installation** : [Scénario_1_Présentation.MP4](./docs/Scénario%201%20-%20Présentation.MP4)
 - **Vidéo du scénario 2 - Démonstration des alarmes** : [Scénario_2_Alarmes.MP4](./docs/Scénario 2 - Alarmes.MP4)
 - **Vidéo du scénario 3 - Démonstration du lien de secours** : [Scénario_3_Lien de secours.MP4](./docs/Scénario 3 - Lien de secours.MP4)
 
