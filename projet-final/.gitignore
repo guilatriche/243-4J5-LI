@@ -22,3 +22,6 @@ mosquitto_backup/
 # Backups de scripts
 interface/interface_*.py
 interface/mqtt_config_*.py
+
+# Ignorer les sauvegardes automatiques de KiCad
+*-backups/
